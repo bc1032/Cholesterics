@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#This bash script compiles and runs the NewString code
+
+#gmin_path="$(dirname $(readlink -f "$0"))"/
+#core=${gmin_path}/source/core/
+#user=$(pwd)/
+
+SRC=$(pwd)/src
+OBJ=$(pwd)/obj
+BIN=$(pwd)/bin
+DATA=$(pwd)/data
+
+STRING=$SRC/string
+LBFGS=$SRC/lbfgs
+
+gfortran -O2 ${debug_flag} -mcmodel=medium \
+  $LBFGS/dprand.f $LBFGS/global_variables.f90 $DATA/potential.f90 \
+  $LBFGS/bfgs_maths.f90 $DATA/data.f90 \
+  $LBFGS/bfgs_logic.f90 \
+  $STRING/string_commons.f90 $STRING/string_io.f90 $STRING/string_routines.f90 $DATA/string_data.f90 \
+  $LBFGS/compute_ev_midlayer.f90 \
+  $STRING/run_string.f90 \
+  -o $BIN/run_string.exe -J$OBJ
+

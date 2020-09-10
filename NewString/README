@@ -1,0 +1,65 @@
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+String method
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+Jack Panter 2019
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+Based on the methods detailed by W. E, W. Ren, and E. Vanden-Eijnden:
+	-> Simplified and improved string method for computing the minimum energy paths in barrier-crossing events. J. Chem. Phys. 126, 164103 (2007).
+	-> A climbing string method for saddle point search. J. Chem. Phys. 138, 134105 (2013).
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Description
+-----------
+The string method is a minimum energy path (MEP) finding algorithm bewteen two user-supplied endpoints. A series of images is initialised across the 
+landscape. Each image is then partially evolved downhill according to the L-BFGS algorithm. Next, the interpolated path between these images is
+calculated, and the images redistributed along this path. These downhill and reparameterisation steps are iterated until suitable convergence.
+The climbing image method is then used to precisely locate the highest energy saddle point along the pathway.
+From this saddle point, a downhill steepest descent path is formed, representing the most accurate MEP. 
+See the version notes below for updates.
+
+
+Software overview
+-----------------
+The data directory contains all the files necessary to run the string method for any user-supplied potential. These files are:
+-potential.f90 (The energy function and gradient. This is exactly the same file as used in NewGmin, for ease of transfer)
+-data.f90 (The parameter file for the model-specific parameters, and L-BFGS parameters. This is exactly the same file as used in NewGmin)
+-minimum_1, minimum_2 (The coordinate files of the two endpoints. These don't have to be minima)
+-string_data.f90 (The parameter file for the string method) 
+
+The source code for the string method is found in src/string. For now, the most important files are:
+-run_string.f90 (This is the main program which calls each section of the string algorithm in turn)
+-string_routines.f90 (This contains all the subroutines needed for the string algorithm, climbing image, and downhill MEP search)
+
+To compile: ./RUNSTRING
+To run: ./bin/run_string.exe
+
+The output directory contains all the run output information:
+-string0.out (The current string during the string evolution steps)
+-energy0.out (The current energy profile during the string evolution steps)
+-position0.out (The current position of each image along the string during the string evolution steps)
+-climbing_image.out (coords of the converged climbing image)
+-climb_energy.out (Energy and rms gradient of the converged climbing image)
+-eigenval.out (Negative eigenvalue of the saddle point)
+-eigenvec.out (Eigenvector of the saddle point, corresponding to the negative eigenvalue direction)
+-mep.out (Steepest descent pathway from the saddle point)
+-mep.data (Energy and position of each image along the steepest descent pathway)
+
+Version notes
+-------------
+
+V 1.0 22/11/2019
+-Although ideally everything should be controlled through only the data folder, the string_rouintes file still requires potential-specific updates,
+ with the key affected routines being string initialisation (INITIALISE_STRING), string convergence (EVOLVE_STRING), climbing image (CLIMBING_IMAGE)
+ and downhill descent (DOWNHILL_MEP).
+-The string interpolation is piecewise-linear.
+-Reparameterisation is equidistant, unless WEIGHT_EXP<0 (which favours concentration close to the highest energy point)
+-Each run of the algorith will only connect two minima. Future developements may see multiple pathways enabled.
+
+
+
+
+
+
+
+
