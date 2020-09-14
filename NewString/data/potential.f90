@@ -97,7 +97,8 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   C = 1.0D0
   ks = 1.0D0
   kt = 1.0D0
-
+  ! q_0 = (((WINDNUMin+WINDNUMfin)*PI))/(2.0D0*(lz))
+  ! a_0 = (((WINDNUMin)*PI))/((lz))
   ! bulkan = -((b**4) + 36*a*c*(b**2) + 216*(a**2)*(c**2) + (b**3)*SQRT((b**2) + 24*a*c) + 24*a*b*c*SQRT((b**2) + 24*a*c))&
   !      / (864 * (c**3) )
   ! twistan = (ly)*(kt*s**2/3.0D0)*(3*a_0**2-6*a_0*q_0+4*q_0**2)
