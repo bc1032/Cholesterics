@@ -6,9 +6,12 @@ subroutine set_defaults()
   !#################!
 
   CM1 = .1
-  
 
-  N = 2
+  gridx = 30
+  gridy = 1
+  gridz = 30
+
+  N = 5*(gridx+1)*(gridz+1)
   M = 1
 
   !###################!
