@@ -25,17 +25,10 @@ with open('theta_1', 'w') as output_file:
 	for J1 in range(0,GRIDY):
 		for J2 in range(0,GRIDZ):
 			for J3 in range(0,GRIDX):
-				if J3 < GRIDX-1:
-					output_file.write( str(w_1*PI*(J3)/WIDTH)+"\n")
-				else:
-					output_file.write( str(w_1*PI*(J3)/WIDTH)+"\n")
+				output_file.write( str(w_1*PI*(J3)/WIDTH)+"\n")
 
 with open('theta_2', 'w') as output_file:
 	for J1 in range(0,GRIDY):
 		for J2 in range(0,GRIDZ):
 			for J3 in range(0,GRIDX):
-				if J3 < GRIDX-1:
 					output_file.write( str(w_2*PI*(J3)/WIDTH)+"\n")
-				else:
-					output_file.write( str(w_2*PI*(J3)/WIDTH)+"\n")
-				
