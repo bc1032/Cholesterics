@@ -1,51 +1,52 @@
 import numpy as np
 import pickle
 
-GRIDX = 1
-GRIDY = 30
+GRIDX = 30
+GRIDY = 1
 GRIDZ = 30
-w = 4
+w_1 = 4
+w_2 = 2
 WIDTH=GRIDZ-1
 PI = np.arctan(1)*4.0
-
-
+theta = 0.0
+Q1, Q2, Q3, Q4, Q5 = 0.0, 0.0, 0.0, 0.0, 0.0
 PHIS = np.empty((GRIDX,GRIDY,GRIDZ))
+
+A = 0.3
+B = 0.2
+C = 1.0
+
+s = (B + np.sqrt(B**2 + 24*A*C))/(4.0*C)
 #long_array(:)=0.0
 #PHIS(:,:,:) = -1.0
 
-
-for J1 in range(0,GRIDX):
-	for J2 in range(0,GRIDY):
-		for J3 in range(0,GRIDZ):
-			PHIS[J1,J2,J3] = (w*PI*(J3)/WIDTH)
-print(PHIS)
-
 with open('minimum_1', 'w') as output_file:
-	for J1 in range(0,GRIDX):
-		for J2 in range(0,GRIDY):
-			for J3 in range(0,GRIDZ):
-				if J3 < GRIDZ-1:
-					#PHIS[J1,J2,J3] = (w*PI*(J3)/WIDTH)
-					output_file.write( str(w*PI*(J3)/WIDTH)+"\n")
-					#output_file.write( str(w*PI*(J3)/WIDTH) + "	" + str(w*PI*(J3)/WIDTH) + "	" + str(0)  +"\n")
-				else:
-					#PHIS[J1,J2,J3] = 1.0
-					output_file.write( str(w*PI*(J3)/WIDTH)+"\n")
-					#output_file.write( str(w*PI) + "	" + str(w*PI) + "	" + str(0.0)  +"\n")
-				#output_file.write( str(w*PI*(J3)/WIDTH) + "	" + str(w*PI*(J3)/WIDTH) + "	" + str(w*PI*(J3)/WIDTH)  +"\n")
-#data = np.loadtxt('coordspy.dat')
-#with open('coords', 'w') as newfile:
-#	for line in range(0,len(data)):
-#		newfile.write( str(data[line,0]) + "\n" + str(data[line,1]) + "\n" + str(data[line,2])  +"\n")
-			
-#with open('cossincoordspy2.dat', 'w') as output_file:
-#	for J1 in range(0,GRIDX):
-#		for J2 in range(0,GRIDY):
-#			for J3 in range(0,GRIDZ):
-#				if J3 < GRIDZ-1:
-				#PHIS[J1,J2,J3] = (w*PI*(J3)/WIDTH)
-#					output_file.write( str(np.cos(w*PI*(J3)/WIDTH)) + "	" + str(np.sin(w*PI*(J3)/WIDTH)) + "	" + str(0)+ "	" + str(J3)+ "	" + str(J2)+ "	" + str(J1)  +"\n")
-#				else:
-#					output_file.write( str(1.0) + "	" + str(0) + "	" + str(0)+ "	" + str(J3)+ "	" + str(J2)+ "	" + str(J1)  +"\n")
-				#output_file.write( str(w*PI*(J3)/WIDTH) + "	" + str(w*PI*(J3)/WIDTH) + "	" + str(w*PI*(J3)/WIDTH)  +"\n")
-		
+	for J1 in range(0,GRIDY):
+		for J2 in range(0,GRIDZ):
+			for J3 in range(0,GRIDX):
+				theta = w_1*PI*(J3)/WIDTH
+				Q1 = s*(np.cos(theta)*np.cos(theta) - (1.0/3.0))
+				Q2 = s*(np.cos(theta)*np.cos(theta))
+				Q3 = 0.0
+				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
+				Q5 = 0.0
+				output_file.write(str(Q1)+"\n")
+				output_file.write(str(Q2)+"\n")
+				output_file.write(str(Q3)+"\n")
+				output_file.write(str(Q4)+"\n")
+				output_file.write(str(Q5)+"\n")
+with open('minimum_2', 'w') as output_file:
+	for J1 in range(0,GRIDY):
+		for J2 in range(0,GRIDZ):
+			for J3 in range(0,GRIDX):
+				theta = w_2*PI*(J3)/WIDTH
+				Q1 = s*(np.cos(theta)*np.cos(theta) - (1.0/3.0))
+				Q2 = s*(np.cos(theta)*np.cos(theta))
+				Q3 = 0.0
+				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
+				Q5 = 0.0
+				output_file.write(str(Q1)+"\n")
+				output_file.write(str(Q2)+"\n")
+				output_file.write(str(Q3)+"\n")
+				output_file.write(str(Q4)+"\n")
+				output_file.write(str(Q5)+"\n")

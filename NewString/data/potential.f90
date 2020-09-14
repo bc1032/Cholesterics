@@ -1,7 +1,7 @@
 MODULE potential
   use global_variables
   implicit none
-  DOUBLE PRECISION :: TOYX, TOYY, CM1
+  DOUBLE PRECISION :: TOYX, TOYY, CM1, gridsize
 
   ! Functions to override
   logical, parameter :: run_init = .true.
@@ -39,7 +39,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   DOUBLE PRECISION COORDS2(N), E, BULK, SPLAY, SURFACE, q_0, WS, TWIST, A, B, C, ks, kt, gridsize, s
   DOUBLE PRECISION :: V(N)
   DOUBLE PRECISION, ALLOCATABLE :: Q1(:,:), Q2(:,:), Q3(:,:), weight(:,:)
-  DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:), BOUNDARY(:)
+  DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: Qt1(:,:), Qt2(:,:), Qt3(:,:), Qt4(:,:), Qt5(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: GRADXQ1(:,:), GRADXQ2(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: GRADXQ3(:,:), GRADXQ4(:,:), GRADXQ5(:,:)
@@ -53,6 +53,11 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   ALLOCATE(Q3(lz,lx))
   ALLOCATE(Q4(lz,lx))
   ALLOCATE(Q5(lz,lx))
+  ALLOCATE(Qt1(lz+1,lx+1))
+  ALLOCATE(Qt2(lz+1,lx+1))
+  ALLOCATE(Qt3(lz+1,lx+1))
+  ALLOCATE(Qt4(lz+1,lx+1))
+  ALLOCATE(Qt5(lz+1,lx+1))
   ALLOCATE(GRADXQ1(lz,lx))
   ALLOCATE(GRADXQ2(lz,lx))
   ALLOCATE(GRADXQ3(lz,lx))
@@ -80,6 +85,11 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   Q3(:,:) = 0.0D0
   Q4(:,:) = 0.0D0
   Q5(:,:) = 0.0D0
+  Qt1(:,:) = 0.0D0
+  Qt2(:,:) = 0.0D0
+  Qt3(:,:) = 0.0D0
+  Qt4(:,:) = 0.0D0
+  Qt5(:,:) = 0.0D0
 
   ws = 0.01D0
   bulk = 0.0D0
@@ -109,11 +119,17 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
 !In the following loop we use central difference formulae (explicit method) for finite differences.
   do k = 1,lz
     do i = 1,lx
-      Q1(k,i)=s*(COS(COORDS2(i + ((k-1)*lx)))*COS(COORDS2(i + ((k-1)*lx)))-(1.0D0/3.0D0))
-      Q2(k,i)=s*(COS(COORDS2(i + ((k-1)*lx)))*COS(COORDS2(i + ((k-1)*lx))))
-      Q3(k,i) = 0.0D0
-      Q4(k,i) = s*(SIN(COORDS2(i + ((k-1)*lx)))*SIN(COORDS2(i + ((k-1)*lx)))-(1.0D0/3.0D0))
-      Q5(k,i) = 0.0D0
+      Q1(k,i)=COORDS2(1 + ((i-1)*5) + ((k-1)*lx*5))
+      Q2(k,i)=COORDS2(2 + ((i-1)*5) + ((k-1)*lx*5))
+      Q3(k,i) = COORDS2(3 + ((i-1)*5) + ((k-1)*lx*5))
+      Q4(k,i) = COORDS2(4 + ((i-1)*5) + ((k-1)*lx*5))
+      Q5(k,i) = COORDS2(5 + ((i-1)*5) + ((k-1)*lx*5))
+
+      Qt1(k,i) = (2.0D0*s/3.0D0)
+      Qt2(k,i) = 0.0D0
+      Qt3(k,i) = 0.0D0
+      Qt4(k,i) = -s/3.0D0
+      Qt5(k,i) = 0.0D0
 
       IF ( (K .EQ. lz) .OR. (K .EQ. 1) ) THEN
         !WEIGHT(K,I) = 0.5 * PFGRIDSIZE**3
