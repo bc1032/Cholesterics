@@ -2,6 +2,7 @@ MODULE potential
   use global_variables
   implicit none
   DOUBLE PRECISION :: TOYX, TOYY, CM1, gridsize
+  INTEGER :: lx, ly, lz
 
   ! Functions to override
   logical, parameter :: run_init = .true.
@@ -36,7 +37,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   IMPLICIT NONE
   LOGICAL GTEST
   INTEGER :: I, J, K, Cur, lx, ly, lz
-  DOUBLE PRECISION COORDS2(N), E, BULK, SPLAY, SURFACE, q_0, WS, TWIST, A, B, C, ks, kt, gridsize, s
+  DOUBLE PRECISION COORDS2(N), E, BULK, SPLAY, SURFACE, q_0, WS, TWIST, a, b, c, ks, kt, gridsize, s
   DOUBLE PRECISION :: V(N)
   DOUBLE PRECISION, ALLOCATABLE :: Q1(:,:), Q2(:,:), Q3(:,:), weight(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:)
@@ -47,17 +48,20 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   DOUBLE PRECISION, ALLOCATABLE :: GRADZQ3(:,:), GRADZQ4(:,:), GRADZQ5(:,:)
 
   !Allocate array memory for all dimensions; length of lx, lz
+  lx = 30
+  ly = 1
+  lz = 30
   ALLOCATE(weight(lz,lx))
   ALLOCATE(Q1(lz,lx))
   ALLOCATE(Q2(lz,lx))
   ALLOCATE(Q3(lz,lx))
   ALLOCATE(Q4(lz,lx))
   ALLOCATE(Q5(lz,lx))
-  ALLOCATE(Qt1(lz+1,lx+1))
-  ALLOCATE(Qt2(lz+1,lx+1))
-  ALLOCATE(Qt3(lz+1,lx+1))
-  ALLOCATE(Qt4(lz+1,lx+1))
-  ALLOCATE(Qt5(lz+1,lx+1))
+  ALLOCATE(Qt1(lz,lx))
+  ALLOCATE(Qt2(lz,lx))
+  ALLOCATE(Qt3(lz,lx))
+  ALLOCATE(Qt4(lz,lx))
+  ALLOCATE(Qt5(lz,lx))
   ALLOCATE(GRADXQ1(lz,lx))
   ALLOCATE(GRADXQ2(lz,lx))
   ALLOCATE(GRADXQ3(lz,lx))
@@ -98,13 +102,11 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   surface = 0.0D0
   E = 0.0
   V(:) = 0.0
-  lx = 30
-  ly = 1
-  lz = 30
+
   gridsize = 1.0D0 / (lz)
-  A = 0.3D0
-  B = 0.2D0
-  C = 1.0D0
+  a = 0.3D0
+  b = 0.2D0
+  c = 1.0D0
   ks = 1.0D0
   kt = 1.0D0
   ! q_0 = (((WINDNUMin+WINDNUMfin)*PI))/(2.0D0*(lz))
@@ -119,8 +121,8 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
 !In the following loop we use central difference formulae (explicit method) for finite differences.
   do k = 1,lz
     do i = 1,lx
-      Q1(k,i)=COORDS2(1 + ((i-1)*5) + ((k-1)*lx*5))
-      Q2(k,i)=COORDS2(2 + ((i-1)*5) + ((k-1)*lx*5))
+      Q1(k,i) = COORDS2(1 + ((i-1)*5) + ((k-1)*lx*5))
+      Q2(k,i) = COORDS2(2 + ((i-1)*5) + ((k-1)*lx*5))
       Q3(k,i) = COORDS2(3 + ((i-1)*5) + ((k-1)*lx*5))
       Q4(k,i) = COORDS2(4 + ((i-1)*5) + ((k-1)*lx*5))
       Q5(k,i) = COORDS2(5 + ((i-1)*5) + ((k-1)*lx*5))
@@ -138,7 +140,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
         !WEIGHT(K,I) = 1.0 * PFGRIDSIZE**3
         WEIGHT(K,I) = 1.0D0*gridsize**2
       end if
-
+      !write(*,*) Q1(k,i)
       bulk = bulk + weight(k,i)*(-a*(Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2) &
             + b*(Q1(k,i)*(-Q2(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2) + (Q1(k,i)**2)*Q4(k,i) - 2*Q2(k,i)*Q3(k,i)*Q5(k,i) &
             - (Q2(k,i)**2)*Q4(k,i) + (Q3(k,i)**2)*Q4(k,i)) &
@@ -208,7 +210,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   CALL COMPUTE_ENERGY(E, bulk, twist, splay, surface)
 
   IF (GTEST) THEN
-   	CALL COMPUTE_GRAD(V)
+   	CALL COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,lx,lz)
   ENDIF
 
   V = V * CM1
@@ -220,16 +222,54 @@ END SUBROUTINE IMPLEMENT_POTENTIAL
 SUBROUTINE COMPUTE_ENERGY(E, bulk, twist, splay, surface)
   IMPLICIT NONE
   DOUBLE PRECISION :: E, bulk, twist, splay, surface
-  E = BULK + TWIST + SPLAY + SURFACE
-  !write(*,*) E
+  E = bulk + twist + splay + surface
 END SUBROUTINE COMPUTE_ENERGY
 
 
-SUBROUTINE COMPUTE_GRAD(V)
+SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,lx,lz)
   IMPLICIT NONE
-  DOUBLE PRECISION :: V(N)
-  V(1) = TOYY/200.0 - 29.0*TOYX/2500.0 + (TOYX-500.0)**3/(2.5D6) + 141.0/50.0
-  V(2) = TOYX/200.0 - 29.0*TOYY/2500.0 + (TOYY-500.0)**3/(2.5D6) + 171.0/50.0
+  DOUBLE PRECISION :: V(N), a, b, c, ws
+  INTEGER :: i, k, lx, lz
+  DOUBLE PRECISION, ALLOCATABLE :: Q1(:,:), Q2(:,:), Q3(:,:), weight(:,:)
+  DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:)
+  DOUBLE PRECISION, ALLOCATABLE :: Qt1(:,:), Qt2(:,:), Qt3(:,:)
+  DOUBLE PRECISION, ALLOCATABLE :: Qt4(:,:), Qt5(:,:)
+
+  V(:) = 0.0
+  do k = 1,lz
+    do i = 1,lx
+      IF ( (K .EQ. lz) .OR. (K .EQ. 1) ) THEN
+      V(1 + ((i-1)*5) + ((k-1)*lx*5)) = (ws/2.0D0)*(2*(Q1(k,i)-Qt1(k,i)) - 2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i)))
+
+      V(2 + ((i-1)*5) + ((k-1)*lx*5)) = 2.0D0*ws*(Q2(k,i)-Qt2(k,i))
+
+      V(3 + ((i-1)*5) + ((k-1)*lx*5)) = 2.0D0*ws*(Q3(k,i)-Qt3(k,i))
+
+      V(4 + ((i-1)*5) + ((k-1)*lx*5)) = (ws/2.0D0)*(2*(Q4(k,i)-Qt4(k,i)) - 2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i)))
+
+      V(5 + ((i-1)*5) + ((k-1)*lx*5)) = 2.0D0*ws*(Q5(k,i)-Qt5(k,i))
+
+      ELSE
+        V(1 + ((i-1)*5) + ((k-1)*lx*5)) = -a*(2*Q1(k,i) + Q4(k,i)) &
+        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+        + 2*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i))
+
+        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = -2*a*Q2(k,i) - 2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) &
+        + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i))
+
+        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = -2*a*Q3(k,i) + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+        + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i))
+
+        V(4 + ((i-1)*5) + ((k-1)*lx*5)) = -a*(Q1(k,i) + 2*Q4(k,i)) &
+        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+        + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i))
+
+        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = -2*a*Q5(k,i) + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+        + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i))
+      end if
+    end do
+  end do
+  !write(*,*) V(:)
 END SUBROUTINE COMPUTE_GRAD
 
 
