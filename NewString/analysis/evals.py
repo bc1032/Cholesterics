@@ -23,7 +23,10 @@ for n in range(0,N):
 
         eval = np.array(np.linalg.eigvals(M))
         eval, evec = np.linalg.eig(M)
-        print(eval[0], evec[:,0])
+        idx = eval.argsort()[::-1]
+        eval = eval[idx]
+        evec = evec[:,idx]
+        print(i, eval, evec[:,])
         i+=1
         fevalout.write(str(eval[0])+"\n")
         fevecout.write(str(evec[0,0])+" "+str(evec[1,0])+"  "+str(evec[2,0])+"\n")
