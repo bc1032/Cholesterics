@@ -36,9 +36,9 @@ CONTAINS
 Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   IMPLICIT NONE
   LOGICAL GTEST
-  INTEGER :: I, J, K, Cur, lx, ly, lz
+  INTEGER :: I, J, K, Cur, lx, ly, lz, w_0,w_1
   DOUBLE PRECISION COORDS2(N), E, BULK, SPLAY, SURFACE, q_0, WS, TWIST, a, b, c, ks, kt, gridsize, s
-  DOUBLE PRECISION :: V(N)
+  DOUBLE PRECISION :: V(N), pi
   DOUBLE PRECISION, ALLOCATABLE :: Q1(:,:), Q2(:,:), Q3(:,:), weight(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: Qt1(:,:), Qt2(:,:), Qt3(:,:), Qt4(:,:), Qt5(:,:)
@@ -102,14 +102,16 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   surface = 0.0D0
   E = 0.0
   V(:) = 0.0
-
+  PI = 4.0D0*ATAN(1.0D0)
+  w_0 = 4
+  w_1 = 2
   gridsize = 1.0D0 / (lz)
   a = 0.3D0
   b = 0.2D0
   c = 1.0D0
   ks = 1.0D0
   kt = 1.0D0
-  ! q_0 = (((WINDNUMin+WINDNUMfin)*PI))/(2.0D0*(lz))
+  q_0 = (((w_0+w_1)*PI))/(2.0D0*(lz))
   ! a_0 = (((WINDNUMin)*PI))/((lz))
   ! bulkan = -((b**4) + 36*a*c*(b**2) + 216*(a**2)*(c**2) + (b**3)*SQRT((b**2) + 24*a*c) + 24*a*b*c*SQRT((b**2) + 24*a*c))&
   !      / (864 * (c**3) )
@@ -210,7 +212,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   CALL COMPUTE_ENERGY(E, bulk, twist, splay, surface)
 
   IF (GTEST) THEN
-   	CALL COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,lz)
+   	CALL COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,lz,ks,kt,q_0)
   ENDIF
 
   V = V * CM1
@@ -226,9 +228,9 @@ SUBROUTINE COMPUTE_ENERGY(E, bulk, twist, splay, surface)
 END SUBROUTINE COMPUTE_ENERGY
 
 
-SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,lz)
+SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,lz,ks,kt,q_0)
   IMPLICIT NONE
-  DOUBLE PRECISION :: V(N), a, b, c, ws, gridsize
+  DOUBLE PRECISION :: V(N), a, b, c, ws, gridsize,ks,kt,q_0
   INTEGER :: i, k, lx, lz
   DOUBLE PRECISION, ALLOCATABLE :: Q1(:,:), Q2(:,:), Q3(:,:), weight(:,:)
   DOUBLE PRECISION, ALLOCATABLE :: Q4(:,:), Q5(:,:)
@@ -240,16 +242,31 @@ SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,
     do i = 1,lx
       IF ( (k == lz) .OR. (k == 1) ) THEN
         V(1 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*(ws/2.0D0) &
-        *(2*(Q1(k,i)-Qt1(k,i))-2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i)))
+        *(2*(Q1(k,i)-Qt1(k,i))-2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i))) &
+        + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
+        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+        + 2*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q2(k,i)-Qt2(k,i))
+        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q2(k,i)-Qt2(k,i)) &
+        + weight(k,i)*(-2*a*Q2(k,i)-2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) &
+        + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q3(k,i)-Qt3(k,i))
+
+        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q3(k,i)-Qt3(k,i)) &
+        + weight(k,i)*(-2*a*Q3(k,i) + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+        + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
 
         V(4 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)&
-        *(ws/2.0D0)*(2*(Q4(k,i)-Qt4(k,i))-2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i)))
+        *(ws/2.0D0)*(2*(Q4(k,i)-Qt4(k,i))-2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i))) &
+        + weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
+        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+        + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q5(k,i)-Qt5(k,i))
+
+        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*2.0D0*ws*(Q5(k,i)-Qt5(k,i)) &
+        + weight(k,i)*(-2*a*Q5(k,i) + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+        + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
       ELSE
         V(1 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
@@ -268,6 +285,29 @@ SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,
 
         V(5 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-2*a*Q5(k,i) + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
         + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+        !Elastic Energy gradient
+        V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+        + kt*q_0*(8.0D0*q_0*(1.0/lx)*(1.0/lz)*Q1(k,i) + (1.0/lx)*Q2(k-1,i)-(1.0/lx)*Q2(k+1,i) &
+        + 4.0D0*q_0*(1.0D0/lx)*(1.0D0/lz) + (1.0D0/lz)*Q5(k,i-1)-(1.0D0/lz)*Q5(k,i+1))
+
+        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+        + kt*q_0*(-(1.0D0/lx)*Q1(k-1,i) + (1.0D0/lx)*Q1(k+1,i) &
+        + 8*q_0*(1.0D0/(lx*lz))*Q2(k,i) + (1.0D0/lz)*Q3(k,i-1) &
+        - (1.0D0/lz)*Q3(k,i+1)+(1.0D0/lx)*Q4(k-1,i) - (1.0D0/lx)*Q4(k+1,i) )
+
+        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+        + kt*q_0*( -(1.0D0/lz)*Q2(k,i-1) + (1.0D0/lz)*Q2(k,i+1) &
+        + (1.0D0/lx)*(8.0D0*q_0*Q3(k,i)+Q5(k-1,i)-Q5(k+1,i)) )
+
+        V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+        + kt*q_0*((1.0D0/lx)*(Q2(k+1,i) - Q2(k-1,i)) + 4.0D0*q_0*(1.0D0/(lx*lz))*Q1(k,i) &
+        + 8.0D0*(1.0D0/(lx*lz))*q_0*Q4(k,i) + (2.0D0/(lx*lz))*(Q5(k,i-1)-Q5(k,i+1)) )
+
+        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+        + kt*q_0*( (1.0D0/lx)*(Q3(k+1,i) - Q3(k-1,i)) + (1.0D0/lz)*(Q1(k,i+1)-Q1(k,i-1) &
+        - 2.0D0*Q4(k,i+1) + 2.0D0*Q4(k,i-1) + 8.0D0*q_0*(1.0D0/lx)*Q5(k,i) ) )
+
       end if
     end do
   end do
