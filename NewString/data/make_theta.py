@@ -1,9 +1,9 @@
 import numpy as np
 import pickle
 
-GRIDX = 30
+GRIDX = 10
 GRIDY = 1
-GRIDZ = 30
+GRIDZ = 10
 w_1 = 4
 w_2 = 2
 WIDTH=GRIDZ-1

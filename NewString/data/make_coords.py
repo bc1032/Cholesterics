@@ -1,11 +1,10 @@
 import numpy as np
-import pickle
 
-GRIDX = 30
+GRIDX = 100
 GRIDY = 1
-GRIDZ = 30
+GRIDZ = 100
 w_1 = 4
-w_2 = 2
+w_2 = 4
 WIDTH=GRIDZ-1
 PI = np.arctan(1)*4.0
 theta = 0.0
@@ -26,7 +25,7 @@ with open('minimum_1', 'w') as output_file:
 			for J3 in range(0,GRIDX):
 				theta = w_1*PI*(J3)/WIDTH
 				Q1 = s*(np.cos(theta)*np.cos(theta) - (1.0/3.0))
-				Q2 = s*(np.cos(theta)*np.cos(theta))
+				Q2 = s*(np.cos(theta)*np.sin(theta))
 				Q3 = 0.0
 				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
 				Q5 = 0.0
@@ -41,7 +40,7 @@ with open('minimum_2', 'w') as output_file:
 			for J3 in range(0,GRIDX):
 				theta = w_2*PI*(J3)/WIDTH
 				Q1 = s*(np.cos(theta)*np.cos(theta) - (1.0/3.0))
-				Q2 = s*(np.cos(theta)*np.cos(theta))
+				Q2 = s*(np.cos(theta)*np.sin(theta))
 				Q3 = 0.0
 				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
 				Q5 = 0.0

@@ -48,9 +48,9 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   DOUBLE PRECISION, ALLOCATABLE :: GRADZQ3(:,:), GRADZQ4(:,:), GRADZQ5(:,:)
 
   !Allocate array memory for all dimensions; length of lx, lz
-  lx = 30
+  lx = 100
   ly = 1
-  lz = 30
+  lz = 100
   ALLOCATE(weight(lz,lx))
   ALLOCATE(Q1(lz,lx))
   ALLOCATE(Q2(lz,lx))
@@ -104,7 +104,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
   V(:) = 0.0
   PI = 4.0D0*ATAN(1.0D0)
   w_0 = 4
-  w_1 = 2
+  w_1 = 4
   gridsize = 1.0D0 / (lz)
   a = 0.3D0
   b = 0.2D0
@@ -135,12 +135,12 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
       Qt4(k,i) = -s/3.0D0
       Qt5(k,i) = 0.0D0
 
-      IF ( (K .EQ. lz) .OR. (K .EQ. 1) ) THEN
+      IF ( (k .EQ. lz) .OR. (k .EQ. 1) ) THEN
         !WEIGHT(K,I) = 0.5 * PFGRIDSIZE**3
-        WEIGHT(K,I) = 0.5D0*gridsize**2
+        weight(k,i) = 1.0D0*gridsize**2!change from 0.5D0 to 1.0D0
       ELSE
         !WEIGHT(K,I) = 1.0 * PFGRIDSIZE**3
-        WEIGHT(K,I) = 1.0D0*gridsize**2
+        weight(k,i) = 1.0D0*gridsize**2
       end if
       !write(*,*) Q1(k,i)
       bulk = bulk + weight(k,i)*(-a*(Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2) &
@@ -164,6 +164,7 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
         GRADZQ3(k,i)   =  (WS/gridsize) * (-3*Q3(k,i)+4*Q3(k+1,i)-Q3(k+2,i)) / (2.0D0)
         GRADZQ4(k,i)   =  (WS/gridsize) * (-3*Q4(k,i)+4*Q4(k+1,i)-Q4(k+2,i)) / (2.0D0)
         GRADZQ5(k,i)   =  (WS/gridsize) * (-3*Q5(k,i)+4*Q5(k+1,i)-Q5(k+2,i)) / (2.0D0)
+
         surface = surface + (weight(k,i)/gridsize)*0.5D0*Ws*( (Q1(k,i)-Qt1(k,i))**2 + 2*(Q2(k,i)-Qt2(k,i))**2 &
                 + 2*(Q3(k,i)-Qt3(k,i))**2+(Qt1(k,i) + Qt4(k,i) - Q1(k,i) - Q4(k,i))**2 &
                 + (Q4(k,i) - Qt4(k,i))**2 +2*(Q5(k,i) - Qt5(k,i))**2 )
@@ -183,11 +184,11 @@ Subroutine IMPLEMENT_POTENTIAL(COORDS2,V,E,GTEST)
         GRADXQ4(k,i) = (Q4(k,1) - Q4(k,i-1)) / (2.0D0 )
         GRADXQ5(k,i) = (Q5(k,1) - Q5(k,i-1)) / (2.0D0 )
       ELSEIF (i == 1) THEN
-        GRADXQ1(k,i) = (Q1(k,i+1) - Q1(k,lx+1)) / (2.0D0 )
-        GRADXQ2(k,i) = (Q2(k,i+1) - Q2(k,lx+1)) / (2.0D0 )
-        GRADXQ3(k,i) = (Q3(k,i+1) - Q3(k,lx+1)) / (2.0D0 )
-        GRADXQ4(k,i) = (Q4(k,i+1) - Q4(k,lx+1)) / (2.0D0 )
-        GRADXQ5(k,i) = (Q5(k,i+1) - Q5(k,lx+1)) / (2.0D0 )
+        GRADXQ1(k,i) = (Q1(k,i+1) - Q1(k,lx)) / (2.0D0 )
+        GRADXQ2(k,i) = (Q2(k,i+1) - Q2(k,lx)) / (2.0D0 )
+        GRADXQ3(k,i) = (Q3(k,i+1) - Q3(k,lx)) / (2.0D0 )
+        GRADXQ4(k,i) = (Q4(k,i+1) - Q4(k,lx)) / (2.0D0 )
+        GRADXQ5(k,i) = (Q5(k,i+1) - Q5(k,lx)) / (2.0D0 )
       ELSE
         !Calculate dx components for divergence squared (splay) term
         GRADXQ1(k,i) = GRADXQ1(k,i) + (Q1(k,i+1) - Q1(k,i-1)) / (2.0D0)
@@ -224,7 +225,7 @@ END SUBROUTINE IMPLEMENT_POTENTIAL
 SUBROUTINE COMPUTE_ENERGY(E, bulk, twist, splay, surface)
   IMPLICIT NONE
   DOUBLE PRECISION :: E, bulk, twist, splay, surface
-  E = bulk + twist + splay + surface
+  E = bulk! + twist + splay + surface
 END SUBROUTINE COMPUTE_ENERGY
 
 
@@ -240,7 +241,7 @@ SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,
   V(:) = 0.0
   do k = 1,lz
     do i = 1,lx
-      IF ( (k == lz) .OR. (k == 1) ) THEN
+      if ( (k == lz) .OR. (k == 1) ) THEN
         V(1 + ((i-1)*5) + ((k-1)*lx*5)) = (weight(k,i)/gridsize)*(ws/2.0D0) &
         *(2*(Q1(k,i)-Qt1(k,i))-2*(Qt1(k,i)+Qt4(k,i)-Q1(k,i)-Q4(k,i))) &
         + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
@@ -269,46 +270,182 @@ SUBROUTINE COMPUTE_GRAD(V,a,b,c,ws,Q1,Q2,Q3,Q4,Q5,Qt1,Qt2,Qt3,Qt4,Qt5,weight,lx,
         + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
       ELSE
-        V(1 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
-        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
-        + 2*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-2*a*Q2(k,i)-2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) &
-        + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        if (i == 1) THEN
 
-        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-2*a*Q3(k,i) + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
-        + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+          ! !Elastic Energy gradient (multiplied by weight)
+          V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*(8.0D0*q_0*(1.0/lx)*(1.0/lz)*Q1(k,i) + (1.0/lx)*Q2(k-1,i)-(1.0/lx)*Q2(k+1,i) &
+          + 4.0D0*q_0*(1.0D0/lx)*(1.0D0/lz) + (1.0D0/lz)*Q5(k,lx)-(1.0D0/lz)*Q5(k,i+1))
 
-        V(4 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
-        + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
-        + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+          V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*(-(1.0D0/lx)*Q1(k-1,i) + (1.0D0/lx)*Q1(k+1,i) &
+          + 8*q_0*(1.0D0/(lx*lz))*Q2(k,i) + (1.0D0/lz)*Q3(k,lx) &
+          - (1.0D0/lz)*Q3(k,i+1)+(1.0D0/lx)*Q4(k-1,i) - (1.0D0/lx)*Q4(k+1,i) )
 
-        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = weight(k,i)*(-2*a*Q5(k,i) + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
-        + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+          V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*( -(1.0D0/lz)*Q2(k,lx) + (1.0D0/lz)*Q2(k,i+1) &
+          + (1.0D0/lx)*(8.0D0*q_0*Q3(k,i)+Q5(k-1,i)-Q5(k+1,i)) )
 
-        !Elastic Energy gradient
-        V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
-        + kt*q_0*(8.0D0*q_0*(1.0/lx)*(1.0/lz)*Q1(k,i) + (1.0/lx)*Q2(k-1,i)-(1.0/lx)*Q2(k+1,i) &
-        + 4.0D0*q_0*(1.0D0/lx)*(1.0D0/lz) + (1.0D0/lz)*Q5(k,i-1)-(1.0D0/lz)*Q5(k,i+1))
+          V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*((1.0D0/lx)*(Q2(k+1,i) - Q2(k-1,i)) + 4.0D0*q_0*(1.0D0/(lx*lz))*Q1(k,i) &
+          + 8.0D0*(1.0D0/(lx*lz))*q_0*Q4(k,i) + (2.0D0/(lx*lz))*(Q5(k,lx)-Q5(k,i+1)) )
 
-        V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
-        + kt*q_0*(-(1.0D0/lx)*Q1(k-1,i) + (1.0D0/lx)*Q1(k+1,i) &
-        + 8*q_0*(1.0D0/(lx*lz))*Q2(k,i) + (1.0D0/lz)*Q3(k,i-1) &
-        - (1.0D0/lz)*Q3(k,i+1)+(1.0D0/lx)*Q4(k-1,i) - (1.0D0/lx)*Q4(k+1,i) )
+          V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*( (1.0D0/lx)*(Q3(k+1,i) - Q3(k-1,i)) + (1.0D0/lz)*(Q1(k,i+1)-Q1(k,lx) &
+          - 2.0D0*Q4(k,i+1) + 2.0D0*Q4(k,lx) + 8.0D0*q_0*(1.0D0/lx)*Q5(k,i) ) )
 
-        V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
-        + kt*q_0*( -(1.0D0/lz)*Q2(k,i-1) + (1.0D0/lz)*Q2(k,i+1) &
-        + (1.0D0/lx)*(8.0D0*q_0*Q3(k,i)+Q5(k-1,i)-Q5(k+1,i)) )
+          V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
+          + b*(-(Q2(k,i)**2) + 2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+          + 2.0D0*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
-        + kt*q_0*((1.0D0/lx)*(Q2(k+1,i) - Q2(k-1,i)) + 4.0D0*q_0*(1.0D0/(lx*lz))*Q1(k,i) &
-        + 8.0D0*(1.0D0/(lx*lz))*q_0*Q4(k,i) + (2.0D0/(lx*lz))*(Q5(k,i-1)-Q5(k,i+1)) )
+          V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q2(k,i) &
+          + 2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) & !changed from -*- tp -*+
+          + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-        V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
-        + kt*q_0*( (1.0D0/lx)*(Q3(k+1,i) - Q3(k-1,i)) + (1.0D0/lz)*(Q1(k,i+1)-Q1(k,i-1) &
-        - 2.0D0*Q4(k,i+1) + 2.0D0*Q4(k,i-1) + 8.0D0*q_0*(1.0D0/lx)*Q5(k,i) ) )
+          V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q3(k,i) &
+          + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+          + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
 
-      end if
+          V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
+          + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+          + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+          V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q5(k,i) &
+          + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+          + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+        elseif (i == lx) then
+
+          V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*(8.0D0*q_0*(1.0/lx)*(1.0/lz)*Q1(k,i) + (1.0/lx)*Q2(k-1,i)-(1.0/lx)*Q2(k+1,i) &
+          + 4.0D0*q_0*(1.0D0/lx)*(1.0D0/lz) + (1.0D0/lz)*Q5(k,i-1)-(1.0D0/lz)*Q5(k,1))
+
+          V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*(-(1.0D0/lx)*Q1(k-1,i) + (1.0D0/lx)*Q1(k+1,i) &
+          + 8*q_0*(1.0D0/(lx*lz))*Q2(k,i) + (1.0D0/lz)*Q3(k,i-1) &
+          - (1.0D0/lz)*Q3(k,1)+(1.0D0/lx)*Q4(k-1,i) - (1.0D0/lx)*Q4(k+1,i) )
+
+          V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*( -(1.0D0/lz)*Q2(k,i-1) + (1.0D0/lz)*Q2(k,1) &
+          + (1.0D0/lx)*(8.0D0*q_0*Q3(k,i)+Q5(k-1,i)-Q5(k+1,i)) )
+
+          V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*((1.0D0/lx)*(Q2(k+1,i) - Q2(k-1,i)) + 4.0D0*q_0*(1.0D0/(lx*lz))*Q1(k,i) &
+          + 8.0D0*(1.0D0/(lx*lz))*q_0*Q4(k,i) + (2.0D0/(lx*lz))*(Q5(k,i-1)-Q5(k,1)) )
+
+          V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*kt*q_0*( (1.0D0/lx)*(Q3(k+1,i) - Q3(k-1,i)) + (1.0D0/lz)*(Q1(k,1)-Q1(k,i-1) &
+          - 2.0D0*Q4(k,1) + 2.0D0*Q4(k,i-1) + 8.0D0*q_0*(1.0D0/lx)*Q5(k,i) ) )
+
+          V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
+          + b*(-(Q2(k,i)**2) + 2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+          + 2.0D0*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+          V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q2(k,i) &
+          + 2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) & !changed from -*- tp -*+
+          + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+          V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q3(k,i) &
+          + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+          + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+          V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
+          + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+          + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+          V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+          + weight(k,i)*(-2*a*Q5(k,i) &
+          + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+          + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        else
+
+          !Elastic Energy gradient (multiplied by weight)
+            V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*kt*q_0*(8.0D0*q_0*(1.0/lx)*(1.0/lz)*Q1(k,i) + (1.0/lx)*Q2(k-1,i)-(1.0/lx)*Q2(k+1,i) &
+            + 4.0D0*q_0*(1.0D0/lx)*(1.0D0/lz) + (1.0D0/lz)*Q5(k,i-1)-(1.0D0/lz)*Q5(k,i+1))
+
+            V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*kt*q_0*(-(1.0D0/lx)*Q1(k-1,i) + (1.0D0/lx)*Q1(k+1,i) &
+            + 8*q_0*(1.0D0/(lx*lz))*Q2(k,i) + (1.0D0/lz)*Q3(k,i-1) &
+            - (1.0D0/lz)*Q3(k,i+1)+(1.0D0/lx)*Q4(k-1,i) - (1.0D0/lx)*Q4(k+1,i) )
+
+            V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*kt*q_0*( -(1.0D0/lz)*Q2(k,i-1) + (1.0D0/lz)*Q2(k,i+1) &
+            + (1.0D0/lx)*(8.0D0*q_0*Q3(k,i)+Q5(k-1,i)-Q5(k+1,i)) )
+
+            V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*kt*q_0*((1.0D0/lx)*(Q2(k+1,i) - Q2(k-1,i)) + 4.0D0*q_0*(1.0D0/(lx*lz))*Q1(k,i) &
+            + 8.0D0*(1.0D0/(lx*lz))*q_0*Q4(k,i) + (2.0D0/(lx*lz))*(Q5(k,i-1)-Q5(k,i+1)) )
+
+            V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*kt*q_0*( (1.0D0/lx)*(Q3(k+1,i) - Q3(k-1,i)) + (1.0D0/lz)*(Q1(k,i+1)-Q1(k,i-1) &
+            - 2.0D0*Q4(k,i+1) + 2.0D0*Q4(k,i-1) + 8.0D0*q_0*(1.0D0/lx)*Q5(k,i) ) )
+          !BULK
+            V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
+            + b*(-(Q2(k,i)**2) + 2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+            + 2.0D0*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+            V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*(-2*a*Q2(k,i) &
+            + 2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) & !changed from -*- tp -*+
+            + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+            V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*(-2*a*Q3(k,i) &
+            + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+            + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+            V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
+            + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+            + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+            V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+            + weight(k,i)*(-2*a*Q5(k,i) &
+            + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+            + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+
+
+          endif
+
+        !!BULK Energy gradient
+
+        ! V(1 + ((i-1)*5) + ((k-1)*lx*5)) = V(1 + ((i-1)*5) + ((k-1)*lx*5)) &
+        ! + weight(k,i)*(-a*(2*Q1(k,i) + Q4(k,i)) &
+        ! + b*(-(Q2(k,i)**2) + 2*Q1(k,i)*Q4(k,i) + Q4(k,i)**2 + Q5(k,i)**2) &
+        ! + 2.0D0*c*(2*Q1(k,i)+Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        !
+        ! V(2 + ((i-1)*5) + ((k-1)*lx*5)) = V(2 + ((i-1)*5) + ((k-1)*lx*5)) &
+        ! + weight(k,i)*(-2*a*Q2(k,i) &
+        ! + 2*b*(-Q1(k,i)*Q2(k,i)-Q2(k,i)*Q4(k,i)-Q3(k,i)*Q5(k,i)) & !changed from -*- tp -*+
+        ! + 4.0D0*c*Q2(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        !
+        ! V(3 + ((i-1)*5) + ((k-1)*lx*5)) = V(3 + ((i-1)*5) + ((k-1)*lx*5)) &
+        ! + weight(k,i)*(-2*a*Q3(k,i) &
+        ! + 2*b*(Q3(k,i)*Q4(k,i)-Q2(k,i)*Q5(k,i)) &
+        ! + 4*c*Q3(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        !
+        ! V(4 + ((i-1)*5) + ((k-1)*lx*5)) = V(4 + ((i-1)*5) + ((k-1)*lx*5)) &
+        ! + weight(k,i)*(-a*(Q1(k,i) + 2*Q4(k,i)) &
+        ! + b*(-(Q2(k,i)**2)+2*Q1(k,i)*Q4(k,i) + Q1(k,i)**2 + Q3(k,i)**2) &
+        ! + 2*c*(Q1(k,i) + 2*Q4(k,i))*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        !
+        ! V(5 + ((i-1)*5) + ((k-1)*lx*5)) = V(5 + ((i-1)*5) + ((k-1)*lx*5)) &
+        ! + weight(k,i)*(-2*a*Q5(k,i) &
+        ! + 2*b*(Q1(k,i)*Q5(k,i)-Q2(k,i)*Q3(k,i)) &
+        ! + 4*c*Q5(k,i)*(Q1(k,i)**2 + Q2(k,i)**2 + Q3(k,i)**2 + Q4(k,i)**2 + Q5(k,i)**2 + Q1(k,i)*Q4(k,i)))
+        end if
     end do
   end do
   !write(*,*) V(:)

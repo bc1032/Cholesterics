@@ -6,13 +6,13 @@ subroutine set_defaults()
   !#################!
 
   CM1 = .1
-  
-  lz = 30
-  lx = 30
+
+  lz = 100
+  lx = 100
   ly = 1
 
   N = 5*(lx)*(lz)
-  M = 1
+  M = 5
 
   !###################!
   ! L-BFGS Parameters !
