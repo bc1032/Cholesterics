@@ -8,7 +8,7 @@ USE STRING_COMMONS
 !------------------------------------------------------------------------
 
 !String method parameters
-N_IMAGES=20 !The total number of images in the string (including the ends)
+N_IMAGES=50 !The total number of images in the string (including the ends)
 N_DOF=5*100*100!The number of elements in the image coordinate vectors
 MAXSTEP=40 !The maximum number of string evolution steps to try
 OUTPUTSTEP=1 !The step interval to outout string data during convergence

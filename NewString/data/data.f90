@@ -12,7 +12,7 @@ subroutine set_defaults()
   ly = 1
 
   N = 5*(lx)*(lz)
-  M = 5
+  M = 6
 
   !###################!
   ! L-BFGS Parameters !

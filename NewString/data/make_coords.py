@@ -3,8 +3,8 @@ import numpy as np
 GRIDX = 100
 GRIDY = 1
 GRIDZ = 100
-w_1 = 4
-w_2 = 4
+w_1 = 5
+w_2 = 2
 WIDTH=GRIDZ-1
 PI = np.arctan(1)*4.0
 theta = 0.0
@@ -29,11 +29,11 @@ with open('minimum_1', 'w') as output_file:
 				Q3 = 0.0
 				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
 				Q5 = 0.0
-				output_file.write(str(Q1)+"\n")
-				output_file.write(str(Q2)+"\n")
-				output_file.write(str(Q3)+"\n")
-				output_file.write(str(Q4)+"\n")
-				output_file.write(str(Q5)+"\n")
+				output_file.write("%f\n" % Q1)
+				output_file.write("%f\n" % Q2)
+				output_file.write("%f\n" % Q3)
+				output_file.write("%f\n" % Q4)
+				output_file.write("%f\n" % Q5)
 with open('minimum_2', 'w') as output_file:
 	for J1 in range(0,GRIDY):
 		for J2 in range(0,GRIDZ):
@@ -44,8 +44,8 @@ with open('minimum_2', 'w') as output_file:
 				Q3 = 0.0
 				Q4 = s*(np.sin(theta)*np.sin(theta) - (1.0/3.0))
 				Q5 = 0.0
-				output_file.write(str(Q1)+"\n")
-				output_file.write(str(Q2)+"\n")
-				output_file.write(str(Q3)+"\n")
-				output_file.write(str(Q4)+"\n")
-				output_file.write(str(Q5)+"\n")
+				output_file.write("%f\n" % Q1)
+				output_file.write("%f\n" % Q2)
+				output_file.write("%f\n" % Q3)
+				output_file.write("%f\n" % Q4)
+				output_file.write("%f\n" % Q5)
