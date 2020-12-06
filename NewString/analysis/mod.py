@@ -17,8 +17,8 @@ for n in range(0,N):
     fevalout.write("x, y, z, eval\n")
     fevecout = open("results/eigenvectors%dlz%dbylx%d.csv" % (n,lz,lx),'w')
     fevecout.write("x, y, z, vx, vy, vz\n")
-    fmod = open("qmod/modulusq%dlz%dbylx%d.csv" % (n,lz,lx),'w')
-    fmod.write("#x, y, z, vx, vy, vz\n")
+    fmod = open("results/modulusq%dlz%dbylx%d.csv" % (n,lz,lx),'w')
+    fmod.write("x, y, z, vx, vy, vz\n")
     #fevecout.write("ASCII\n")
     #fevecout.write("Eigenvector\n")
     #fevecout.write("DATASET STRUCTURED_GRID\n")
@@ -64,11 +64,9 @@ for n in range(0,N):
         #print(i, eval, evec[:,])
         #i+=1
 
-        fevalout.write("%d, 1, %d, %f\n" % (indexz, indexz, eval[0]))
-        # fmod.write("%d, 1, %d, %f\n" % (indexx, indexz, mod))
-        fmod.write("%f\n" % (mod))
-
-        fevecout.write("%d, 1, %d, %f, %f, %f\n" % (indexz, indexx, evec[0,0], evec[1,0],evec[2,0] ))
+        fevalout.write("%d, 1, %d, %f\n" % (indexx, indexz, eval[0]))
+        fmod.write("%d, 1, %d, %f\n" % (indexx, indexz, mod))
+        fevecout.write("%d, 1, %d, %f, %f, %f\n" % (indexx, indexz, evec[0,0], evec[1,0],evec[2,0] ))
 
         #fevecout.write("%d, 1, %d, " + str(evec[1,0])+", "+str(evec[2,0])+", "+str(evec[0,0])+"\n" % (indexx, indexz))
         #if( i % 9999 == 0):
