@@ -19,32 +19,13 @@ for n in range(0,N):
     fevecout.write("x, y, z, vx, vy, vz\n")
     fmod = open("results/modulusq%dlz%dbylx%d.csv" % (n,lz,lx),'w')
     fmod.write("x, y, z, vx, vy, vz\n")
-    #fevecout.write("ASCII\n")
-    #fevecout.write("Eigenvector\n")
-    #fevecout.write("DATASET STRUCTURED_GRID\n")
-    #fevecout.write("DIMENSIONS %d %d %d\n" % (lx,ly,lz) )
-    #fevecout.write("POINTS %d int\n" % points)
-    #fevecout.write("ORIGIN 0 0 1\n")
-    #fevecout.write("SPACING 1 1 1\n")
-    # for k in range(0,lz):
-    #     for i in range(0,lx):
-    #         fevecout.write("%d, 1, %d\n" % (i,k))
-    #         #fevecout.write("%d %d 1\n" % (i,k))
 
-
-    #fevecout.write("VECTORS eigenvectors float\n")
     i=1
     print("start = ")
     print((i-1)*5 + 5*n*lx*lz)
-    #for k in range(0,lz):
-    #    for i in range(0,lx):
-            #fevecout.write("%d, 1, %d\n" % (i,k))
+
     for i in range(0,(lz*lx)):
-        # Q1 = data[(i-1)*5 + 5*n*lx*lz+1]
-        # Q2 = data[((i-1)*5)+1 + 5*n*lx*lz+1]
-        # Q3 = data[((i-1)*5)+2 + 5*n*lx*lz+1]
-        # Q4 = data[((i-1)*5)+3 + 5*n*lx*lz+1]
-        # Q5 = data[((i-1)*5)+4 + 5*n*lx*lz+1]
+
         indexz = np.mod(int(i), lz)
         indexx = int(int(i)/lz)
 

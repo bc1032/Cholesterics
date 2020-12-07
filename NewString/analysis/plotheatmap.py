@@ -9,17 +9,30 @@ lz,lx = 100,100
 
 # data = np.loadtxt('results/eigenvalues9lz100bylx100.dat')
 for i in range(0,50):
-    data = np.loadtxt("qmod/modulusq%dlz100bylx100.csv" % (i))
+    #data = np.loadtxt("qmod/modulusq%dlz100bylx100.csv" % (i))
+    data = np.loadtxt("curl/curlq%dlz100bylx100.csv" % (i))
 
     import matplotlib.pyplot as plt
     import matplotlib.colors as mcolors
-    print(np.shape(data))
+    #print(np.shape(data))
     data = np.reshape(data,(lz,lx))
     #print((data[0,:]))
     #plt.hist2d(data[:,0],data[:,1])#,range=[[0,lz],[0,lx]])#,bins = lz*lx)
-    plt.imshow(data[:,],cmap='viridis', vmin = 0.0, vmax = 1)#, vmin=0.0, vmax=0.49)#,  interpolation='nearest')
+    plt.imshow(data[:,],cmap='viridis', vmin = -0.001, vmax = 0.001)#, vmin=0.0, vmax=0.49)#,  interpolation='nearest')
+    #plt.colorbar()
+    # plt.savefig("eigen0lz100bylx100second.pdf")
+    plt.savefig("curlvids/mod%dlz100bylx100second.png" % i)
+
+    data = np.loadtxt("qmod/modulusq%dlz100bylx100.csv" % (i))
+
+    #print(np.shape(data))
+    data = np.reshape(data,(lz,lx))
+    #print((data[0,:]))
+    #plt.hist2d(data[:,0],data[:,1])#,range=[[0,lz],[0,lx]])#,bins = lz*lx)
+    plt.imshow(data[:,],cmap='viridis', vmin = 0, vmax = 1)#, vmin=0.0, vmax=0.49)#,  interpolation='nearest')
     #plt.colorbar()
     # plt.savefig("eigen0lz100bylx100second.pdf")
     plt.savefig("vids/mod%dlz100bylx100second.png" % i)
+
 
 #plt.show()
