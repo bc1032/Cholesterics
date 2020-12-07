@@ -3,8 +3,8 @@ import numpy as np
 GRIDX = 100
 GRIDY = 1
 GRIDZ = 100
-w_1 = 5
-w_2 = 2
+w_1 = 2
+w_2 = 3
 WIDTH=GRIDZ-1
 PI = np.arctan(1)*4.0
 theta = 0.0
