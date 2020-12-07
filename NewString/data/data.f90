@@ -7,12 +7,12 @@ subroutine set_defaults()
 
   CM1 = .1
 
-  gridx = 30
-  gridy = 1
-  gridz = 30
+  lz = 100
+  lx = 100
+  ly = 1
 
-  N = 5*(gridx+1)*(gridz+1)
-  M = 1
+  N = 5*(lx)*(lz)
+  M = 6
 
   !###################!
   ! L-BFGS Parameters !
